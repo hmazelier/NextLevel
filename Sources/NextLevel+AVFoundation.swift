@@ -72,9 +72,9 @@ extension AVCaptureConnection {
 }
 
 extension AVCaptureDevice {
-
+    
     // MARK: device lookup
-
+    
     /// Returns the capture device for the desired device type and position.
     /// #protip, NextLevelDevicePosition.avfoundationType can provide the AVFoundation type.
     ///
@@ -84,10 +84,8 @@ extension AVCaptureDevice {
     /// - Returns: Capture device for the specified type and position, otherwise nil
     public class func captureDevice(withType deviceType: AVCaptureDeviceType, forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [deviceType]
-        if let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position) {
-            return discoverySession.devices.first
-        }
-        return nil
+        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession.devices.first
     }
     
     /// Returns the default wide angle video device for the desired position, otherwise nil.
@@ -96,10 +94,8 @@ extension AVCaptureDevice {
     /// - Returns: Wide angle video capture device, otherwise nil
     public class func wideAngleVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInWideAngleCamera]
-        if let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position) {
-            return discoverySession.devices.first
-        }
-        return nil
+        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession.devices.first
     }
     
     /// Returns the default telephoto video device for the desired position, otherwise nil.
@@ -108,10 +104,8 @@ extension AVCaptureDevice {
     /// - Returns: Telephoto video capture device, otherwise nil
     public class func telephotoVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInTelephotoCamera]
-        if let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position) {
-            return discoverySession.devices.first
-        }
-        return nil
+        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession.devices.first
     }
     
     /// Returns the primary duo camera video device, if available, else the default wide angel camera, otherwise nil.
@@ -120,7 +114,7 @@ extension AVCaptureDevice {
     /// - Returns: Primary video capture device found, otherwise nil
     public class func primaryVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInDuoCamera, .builtInWideAngleCamera]
-        if let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position) {
+        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
             // prioritize duo camera systems before wide angle
             for device in discoverySession.devices {
                 if (device.deviceType == .builtInDuoCamera) {
@@ -129,191 +123,189 @@ extension AVCaptureDevice {
             }
             return discoverySession.devices.first
         }
-        return nil
-    }
-    
-    /// Returns the default video capture device, otherwise nil.
-    ///
-    /// - Returns: Default video capture device, otherwise nil
-    public class func videoDevice() -> AVCaptureDevice? {
-        return AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo)
-    }
-    
-    /// Returns the default audio capture device, otherwise nil.
-    ///
-    /// - Returns: default audio capture device, otherwise nil
-    public class func audioDevice() -> AVCaptureDevice? {
-        return AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeAudio)
-    }
-    
-    // MARK: NextLevel types
-    
-    internal func torchModeNextLevelType() -> NextLevelTorchMode {
-        var mode = NextLevelTorchMode.off
-        switch self.torchMode {
-        case .auto:
-            mode = .auto
-            break
-        case .off:
-            mode = .off
-            break
-        case .on:
-            mode = .on
-            break
+        
+        /// Returns the default video capture device, otherwise nil.
+        ///
+        /// - Returns: Default video capture device, otherwise nil
+        public class func videoDevice() -> AVCaptureDevice? {
+            return AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo)
         }
-        return mode
-    }
-    
-    internal func focusModeNextLevelType() -> NextLevelFocusMode {
-        var mode = NextLevelFocusMode.locked
-        switch self.focusMode {
-        case .autoFocus:
-            mode = .autoFocus
-            break
-        case .continuousAutoFocus:
-            mode = .continuousAutoFocus
-            break
-        case .locked:
-            mode = .locked
-            break
+        
+        /// Returns the default audio capture device, otherwise nil.
+        ///
+        /// - Returns: default audio capture device, otherwise nil
+        public class func audioDevice() -> AVCaptureDevice? {
+            return AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeAudio)
         }
-        return mode
-    }
-    
-    internal func exposureModeNextLevelType() -> NextLevelExposureMode {
-        var nextLevelMode = NextLevelExposureMode.locked
-        switch self.exposureMode {
-        case .autoExpose:
-            nextLevelMode = .autoExpose
-            break
-        case .continuousAutoExposure:
-            nextLevelMode = .continuousAutoExposure
-            break
-        case .locked:
-            nextLevelMode = .locked
-            break
-        case .custom:
-            nextLevelMode = .custom
-            break
-        }
-        return nextLevelMode
-    }
-    
-}
-
-extension AVCaptureDeviceFormat {
-    
-    /// Returns the maximum capable framerate for the desired capture format and minimum, otherwise zero.
-    ///
-    /// - Parameters:
-    ///   - format: Capture format to evaluate for a specific framerate.
-    ///   - minFrameRate: Lower bound time scale or minimum desired framerate.
-    /// - Returns: Maximum capable framerate within the desired format and minimum constraints.
-    public class func maxFrameRate(forFormat format: AVCaptureDeviceFormat, minFrameRate: CMTimeScale) -> CMTimeScale {
-        var lowestTimeScale: CMTimeScale = 0
-        if let videoSupportedFrameRateRanges = format.videoSupportedFrameRateRanges as? [AVFrameRateRange] {
-            for range in videoSupportedFrameRateRanges {
-                if range.minFrameDuration.timescale >= minFrameRate && (lowestTimeScale == 0 || range.minFrameDuration.timescale < lowestTimeScale) {
-                    lowestTimeScale = range.minFrameDuration.timescale
-                }
+        
+        // MARK: NextLevel types
+        
+        internal func torchModeNextLevelType() -> NextLevelTorchMode {
+            var mode = NextLevelTorchMode.off
+            switch self.torchMode {
+            case .auto:
+                mode = .auto
+                break
+            case .off:
+                mode = .off
+                break
+            case .on:
+                mode = .on
+                break
             }
+            return mode
         }
-        return lowestTimeScale
+        
+        internal func focusModeNextLevelType() -> NextLevelFocusMode {
+            var mode = NextLevelFocusMode.locked
+            switch self.focusMode {
+            case .autoFocus:
+                mode = .autoFocus
+                break
+            case .continuousAutoFocus:
+                mode = .continuousAutoFocus
+                break
+            case .locked:
+                mode = .locked
+                break
+            }
+            return mode
+        }
+        
+        internal func exposureModeNextLevelType() -> NextLevelExposureMode {
+            var nextLevelMode = NextLevelExposureMode.locked
+            switch self.exposureMode {
+            case .autoExpose:
+                nextLevelMode = .autoExpose
+                break
+            case .continuousAutoExposure:
+                nextLevelMode = .continuousAutoExposure
+                break
+            case .locked:
+                nextLevelMode = .locked
+                break
+            case .custom:
+                nextLevelMode = .custom
+                break
+            }
+            return nextLevelMode
+        }
+        
     }
     
-    /// Checks if the specified capture device format supports a desired framerate.
-    ///
-    /// - Parameters:
-    ///   - frameRate: Desired frame rate
-    /// - Returns: `true` if the capture device format supports the given criteria, otherwise false
-    public func isSupported(withFrameRate frameRate: CMTimeScale) -> Bool {
-        return self.isSupported(withFrameRate: frameRate, dimensions: CMVideoDimensions(width: 0, height: 0))
-    }
-    
-    /// Checks if the specified capture device format supports a desired framerate and dimensions.
-    ///
-    /// - Parameters:
-    ///   - frameRate: Desired frame rate
-    ///   - dimensions: Desired video dimensions
-    /// - Returns: `true` if the capture device format supports the given criteria, otherwise false
-    public func isSupported(withFrameRate frameRate: CMTimeScale, dimensions: CMVideoDimensions) -> Bool {
-        let formatDimensions = CMVideoFormatDescriptionGetDimensions(self.formatDescription)
-        if (formatDimensions.width >= dimensions.width && formatDimensions.height >= dimensions.height) {
-            if let videoSupportedFrameRateRanges: [AVFrameRateRange] = self.videoSupportedFrameRateRanges as? [AVFrameRateRange] {
-                for frameRateRange in videoSupportedFrameRateRanges {
-                    if frameRateRange.minFrameDuration.timescale >= frameRate && frameRateRange.maxFrameDuration.timescale <= frameRate {
-                        return true
+    extension AVCaptureDeviceFormat {
+        
+        /// Returns the maximum capable framerate for the desired capture format and minimum, otherwise zero.
+        ///
+        /// - Parameters:
+        ///   - format: Capture format to evaluate for a specific framerate.
+        ///   - minFrameRate: Lower bound time scale or minimum desired framerate.
+        /// - Returns: Maximum capable framerate within the desired format and minimum constraints.
+        public class func maxFrameRate(forFormat format: AVCaptureDeviceFormat, minFrameRate: CMTimeScale) -> CMTimeScale {
+            var lowestTimeScale: CMTimeScale = 0
+            if let videoSupportedFrameRateRanges = format.videoSupportedFrameRateRanges as? [AVFrameRateRange] {
+                for range in videoSupportedFrameRateRanges {
+                    if range.minFrameDuration.timescale >= minFrameRate && (lowestTimeScale == 0 || range.minFrameDuration.timescale < lowestTimeScale) {
+                        lowestTimeScale = range.minFrameDuration.timescale
                     }
                 }
             }
+            return lowestTimeScale
         }
-        return false
+        
+        /// Checks if the specified capture device format supports a desired framerate.
+        ///
+        /// - Parameters:
+        ///   - frameRate: Desired frame rate
+        /// - Returns: `true` if the capture device format supports the given criteria, otherwise false
+        public func isSupported(withFrameRate frameRate: CMTimeScale) -> Bool {
+            return self.isSupported(withFrameRate: frameRate, dimensions: CMVideoDimensions(width: 0, height: 0))
+        }
+        
+        /// Checks if the specified capture device format supports a desired framerate and dimensions.
+        ///
+        /// - Parameters:
+        ///   - frameRate: Desired frame rate
+        ///   - dimensions: Desired video dimensions
+        /// - Returns: `true` if the capture device format supports the given criteria, otherwise false
+        public func isSupported(withFrameRate frameRate: CMTimeScale, dimensions: CMVideoDimensions) -> Bool {
+            let formatDimensions = CMVideoFormatDescriptionGetDimensions(self.formatDescription)
+            if (formatDimensions.width >= dimensions.width && formatDimensions.height >= dimensions.height) {
+                if let videoSupportedFrameRateRanges: [AVFrameRateRange] = self.videoSupportedFrameRateRanges as? [AVFrameRateRange] {
+                    for frameRateRange in videoSupportedFrameRateRanges {
+                        if frameRateRange.minFrameDuration.timescale >= frameRate && frameRateRange.maxFrameDuration.timescale <= frameRate {
+                            return true
+                        }
+                    }
+                }
+            }
+            return false
+        }
+        
     }
     
-}
-
-extension AVCaptureVideoOrientation {
-    
-    // MARK: NextLevel types
-
-    internal static func avorientationFromUIDeviceOrientation(_ orientation: UIDeviceOrientation) -> AVCaptureVideoOrientation {
-        var avorientation: AVCaptureVideoOrientation = .portrait
-        switch orientation {
-        case .portrait:
-            break
-        case .landscapeLeft:
-            avorientation = .landscapeRight
-            break
-        case .landscapeRight:
-            avorientation = .landscapeLeft
-            break
-        case .portraitUpsideDown:
-            avorientation = .portraitUpsideDown
-            break
-        default:
-            break
+    extension AVCaptureVideoOrientation {
+        
+        // MARK: NextLevel types
+        
+        internal static func avorientationFromUIDeviceOrientation(_ orientation: UIDeviceOrientation) -> AVCaptureVideoOrientation {
+            var avorientation: AVCaptureVideoOrientation = .portrait
+            switch orientation {
+            case .portrait:
+                break
+            case .landscapeLeft:
+                avorientation = .landscapeRight
+                break
+            case .landscapeRight:
+                avorientation = .landscapeLeft
+                break
+            case .portraitUpsideDown:
+                avorientation = .portraitUpsideDown
+                break
+            default:
+                break
+            }
+            return avorientation
         }
-        return avorientation
+        
+        internal func deviceOrientationNextLevelType() -> NextLevelDeviceOrientation {
+            var nlorientation = NextLevelDeviceOrientation.portrait
+            switch self {
+            case .portrait:
+                break
+            case .landscapeLeft:
+                nlorientation = .landscapeRight
+                break
+            case .landscapeRight:
+                nlorientation = .landscapeLeft
+                break
+            case .portraitUpsideDown:
+                nlorientation = .portraitUpsideDown
+                break
+            }
+            return nlorientation
+        }
+        
     }
     
-    internal func deviceOrientationNextLevelType() -> NextLevelDeviceOrientation {
-        var nlorientation = NextLevelDeviceOrientation.portrait
-        switch self {
-        case .portrait:
-            break
-        case .landscapeLeft:
-            nlorientation = .landscapeRight
-            break
-        case .landscapeRight:
-            nlorientation = .landscapeLeft
-            break
-        case .portraitUpsideDown:
-            nlorientation = .portraitUpsideDown
-            break
+    extension AVCaptureFlashMode {
+        
+        // MARK: NextLevel types
+        
+        internal func flashModeNextLevelType() -> NextLevelFlashMode {
+            var mode = NextLevelFlashMode.off
+            switch self {
+            case .auto:
+                mode = .auto
+                break
+            case .off:
+                mode = .off
+                break
+            case .on:
+                mode = .on
+                break
+            }
+            return mode
         }
-        return nlorientation
-    }
-    
-}
-
-extension AVCaptureFlashMode {
-    
-    // MARK: NextLevel types
-    
-    internal func flashModeNextLevelType() -> NextLevelFlashMode {
-        var mode = NextLevelFlashMode.off
-        switch self {
-        case .auto:
-            mode = .auto
-            break
-        case .off:
-            mode = .off
-            break
-        case .on:
-            mode = .on
-            break
-        }
-        return mode
-    }
-    
+        
 }
