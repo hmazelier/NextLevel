@@ -84,8 +84,8 @@ extension AVCaptureDevice {
     /// - Returns: Capture device for the specified type and position, otherwise nil
     public class func captureDevice(withType deviceType: AVCaptureDeviceType, forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [deviceType]
-        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
-        return discoverySession.devices.first
+        let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession?.devices.first
     }
     
     /// Returns the default wide angle video device for the desired position, otherwise nil.
@@ -94,8 +94,8 @@ extension AVCaptureDevice {
     /// - Returns: Wide angle video capture device, otherwise nil
     public class func wideAngleVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInWideAngleCamera]
-        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
-        return discoverySession.devices.first
+        let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession?.devices.first
     }
     
     /// Returns the default telephoto video device for the desired position, otherwise nil.
@@ -104,8 +104,8 @@ extension AVCaptureDevice {
     /// - Returns: Telephoto video capture device, otherwise nil
     public class func telephotoVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInTelephotoCamera]
-        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
-        return discoverySession.devices.first
+        let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        return discoverySession?.devices.first
     }
     
     /// Returns the primary duo camera video device, if available, else the default wide angel camera, otherwise nil.
@@ -114,14 +114,14 @@ extension AVCaptureDevice {
     /// - Returns: Primary video capture device found, otherwise nil
     public class func primaryVideoDevice(forPosition position: AVCaptureDevicePosition) -> AVCaptureDevice? {
         let deviceTypes: [AVCaptureDeviceType] = [.builtInDuoCamera, .builtInWideAngleCamera]
-        let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
+        let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: position)
             // prioritize duo camera systems before wide angle
-            for device in discoverySession.devices {
+            for device in (discoverySession?.devices ?? []) {
                 if (device.deviceType == .builtInDuoCamera) {
                     return device
                 }
             }
-            return discoverySession.devices.first
+            return discoverySession?.devices.first
         }
         
         /// Returns the default video capture device, otherwise nil.

@@ -2026,8 +2026,8 @@ extension NextLevel {
     public var supportsVideoCapture: Bool {
         get {
             let deviceTypes: [AVCaptureDeviceType] = [.builtInWideAngleCamera, .builtInTelephotoCamera, .builtInDuoCamera]
-            let discoverySession = AVCaptureDeviceDiscoverySession(__deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: .unspecified)
-            return discoverySession.devices.count > 0
+            let discoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: .unspecified)
+            return (discoverySession?.devices.count ?? 0) > 0
         }
     }
     
